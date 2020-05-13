@@ -1,53 +1,113 @@
 ---
 page_type: sample
 languages:
-- csharp
+- docker
+- docker-compose
 products:
-- dotnet
-description: "Add 150 character max description"
-urlFragment: "update-this-to-unique-url-stub"
+- azure
+- azure-iot-hub
+- azure-iot-edge
+description: "This is the TICK stack sandbox, converted for Azure IoT Edge"
+urlFragment: "az-iot-edge-tick"
 ---
 
-# Official Microsoft Sample
+# TICK on the Azure IoT Edge
 
-<!-- 
-Guidelines on README format: https://review.docs.microsoft.com/help/onboard/admin/samples/concepts/readme-template?branch=master
-
-Guidance on onboarding samples to docs.microsoft.com/samples: https://review.docs.microsoft.com/help/onboard/admin/samples/process/onboarding?branch=master
-
-Taxonomies for products and languages: https://review.docs.microsoft.com/new-hope/information-architecture/metadata/taxonomies?branch=master
--->
-
-Give a short description for your sample here. What does it do and why is it important?
+This is the [TICK stack sandbox](https://github.com/influxdata/sandbox), converted for Azure IoT Edge.
 
 ## Contents
 
-Outline the file contents of the repository. It helps users navigate the codebase, build configuration and any related assets.
-
 | File/folder       | Description                                |
 |-------------------|--------------------------------------------|
-| `src`             | Sample source code.                        |
+| `docker-compose.yml`             | The docker-compose file that builds and runs this solution.                        |
+| `deployment.template.json`             | The IoT Edge deployment manifest template that generates the solution manifest.                        |
+| `.env`             | The solution .env file that holds all the solution environment variable values                         |
+| `modules`             | The modules that this solution contains.                        |
+| `config`             | The configuration that the solution modules will use during the container image build step.                        |
 | `.gitignore`      | Define what to ignore at commit time.      |
-| `CHANGELOG.md`    | List of changes to the sample.             |
 | `CONTRIBUTING.md` | Guidelines for contributing to the sample. |
 | `README.md`       | This README file.                          |
 | `LICENSE`         | The license for the sample.                |
 
 ## Prerequisites
 
-Outline the required components and tools that a user might need to have on their machine in order to run the sample. This can be anything from frameworks, SDKs, OS versions or IDE releases.
+This is an Azure IoT Edge application that you can build and publish using VS Code with the IoT Edge extensions. For more information on how to use Visual Studio Code to develop and debug modules for Azure IoT Edge you can read [here](https://docs.microsoft.com/en-us/azure/iot-edge/how-to-vs-code-develop-module).
 
-## Setup
+## To build and push and deploy
 
-Explain how to prepare the sample once the user clones or downloads the repository. The section should outline every step necessary to install dependencies and set up any settings (for example, API keys and output folders).
+There are two different ways to build push and deploy this stack on the edge:
 
-## Running the sample
+### 1. Using `docker-compose` and `az cli`
 
-Outline step-by-step instructions to execute the sample and see its output. Include steps for executing the sample from the IDE, starting specific services in the Azure portal or anything related to the overall launch of the code.
+You can use the provided `docker-compose.yml` file to build and push the module containers:
 
-## Key concepts
+Clone this repo:
 
-Provide users with more context on the tools and services used in the sample. Explain some of the code that is being used and how services interact with each other.
+``` bash
+git clone https://github.com/paloukari/az-iot-edge-tick
+cd az-iot-edge-tick
+```
+
+Edit .env file to set your container registry:
+
+``` bash
+vim .env
+```
+
+Build and push the containers:
+
+``` bash
+docker-compose build
+docker-compose push
+```
+
+Edit the generated deployment manifest to match the pushed container names, registry and registry credentials:
+
+``` bash
+vim config/deployment.amd64.json
+```
+
+Push the manifest:
+
+``` bash
+az iot edge set-modules --device-id [device id] --hub-name [hub name] --content ./config/deployment.amd64.json
+```
+
+### 2. Using VS Code
+
+This repo is compatible with the VS Code Azure IoT Edge extension structure.
+
+1. Clone this repo and open the project:
+
+``` bash
+git clone https://github.com/paloukari/az-iot-edge-tick
+cd az-iot-edge-tick
+code .
+```
+
+> Make sure you have the **Azure IoT Edge extension** installed.
+
+1. Edit .env file and set your container registry and credentials.
+
+1. Hit F1 and type Azure IoT Edge: *Generate IoT Edge deployment manifest*
+  
+1. Hit F1 and type Azure IoT Edge: *Build and push IoT Edge Solution*
+
+1. In the Azure IoT Hub VS Code pane, right click on a device and select *Create deployment for single device*
+
+## Fire up the IoT Edge Device on your local environment and test the TICK stack
+
+Get a device connection string and run
+
+``` bash
+docker run -it -d --privileged -p 8888:8888 -e connectionString='YOUR DEVICE CONNECTION STRING' toolboc/azure-iot-edge-device-container
+```
+
+> This command will deploy and start the TICK stack inside a single container
+
+Launch Chronograf at: http://localhost:8888
+
+> To see real time docker diagnostics, navigate to the hosts list and open the *telegraf-getting-started*
 
 ## Contributing
 
